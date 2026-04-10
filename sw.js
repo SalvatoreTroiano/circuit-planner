@@ -1,14 +1,14 @@
 // Circuit Planner Service Worker
 // Versione cache — incrementa per forzare l'aggiornamento
-const CACHE_NAME = 'circuit-planner-v1';
+const CACHE_NAME = 'circuit-planner-v2';
 
 // File da mettere in cache per l'uso offline
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './manifest.json',
-  './icons/icon-192x192.png',
-  './icons/icon-512x512.png',
+  './icon-192x192.png',
+  './icon-512x512.png',
   // CDN libraries — vengono cachate al primo caricamento
   'https://cdn.tailwindcss.com',
   'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'
@@ -30,8 +30,6 @@ self.addEventListener('install', event => {
         });
     }).then(() => {
       console.log('[SW] Installation complete.');
-      // Non chiamiamo skipWaiting() qui: aspettiamo SKIP_WAITING dall'app
-      // così il pulsante "Aggiorna App" può essere mostrato all'utente
     })
   );
 });
