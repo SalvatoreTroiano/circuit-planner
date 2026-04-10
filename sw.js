@@ -30,7 +30,8 @@ self.addEventListener('install', event => {
         });
     }).then(() => {
       console.log('[SW] Installation complete.');
-      return self.skipWaiting();
+      // Non chiamiamo skipWaiting() qui: aspettiamo SKIP_WAITING dall'app
+      // così il pulsante "Aggiorna App" può essere mostrato all'utente
     })
   );
 });

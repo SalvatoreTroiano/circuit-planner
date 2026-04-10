@@ -2,56 +2,8 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Circuit Planner</title>
-
-<!-- ══ PWA / Meta ══ -->
-<meta name="description" content="Pianificatore di schede allenamento a circuito per personal trainer. Crea, organizza e genera PDF professionali.">
-<meta name="keywords" content="personal trainer, allenamento, circuito, fitness, scheda, PDF, workout">
-<meta name="author" content="Circuit Planner">
-<meta name="robots" content="index, follow">
-
-<!-- ══ PWA Manifest & Theme ══ -->
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#15803d">
-<meta name="background-color" content="#0a1a0a">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Circuit Planner">
-<meta name="application-name" content="Circuit Planner">
-<meta name="msapplication-TileColor" content="#052e16">
-<meta name="msapplication-TileImage" content="icons/icon-144x144.png">
-<meta name="msapplication-config" content="browserconfig.xml">
-
-<!-- ══ Favicon & Icons ══ -->
-<link rel="icon" type="image/x-icon" href="favicon.ico">
-<link rel="icon" type="image/png" sizes="16x16" href="icons/icon-16x16.png">
-<link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32x32.png">
-<link rel="icon" type="image/png" sizes="48x48" href="icons/icon-48x48.png">
-<link rel="apple-touch-icon" href="icons/icon-180x180.png">
-<link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152x152.png">
-<link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180x180.png">
-<link rel="apple-touch-icon" sizes="167x167" href="icons/icon-192x192.png">
-
-<!-- ══ Open Graph ══ -->
-<meta property="og:type" content="website">
-<meta property="og:title" content="Circuit Planner — Schede Allenamento Professionali">
-<meta property="og:description" content="Crea schede di allenamento a circuito e genera PDF professionali per i tuoi atleti.">
-<meta property="og:image" content="icons/icon-512x512.png">
-<meta property="og:locale" content="it_IT">
-
-<!-- ══ Twitter Card ══ -->
-<meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Circuit Planner">
-<meta name="twitter:description" content="Pianificatore di allenamento a circuito con generazione PDF.">
-<meta name="twitter:image" content="icons/icon-512x512.png">
-
-<!-- ══ Apple Splash Screens ══ -->
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
-<!-- ══ Scripts ══ -->
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
@@ -124,33 +76,22 @@
 </head>
 <body class="min-h-screen p-4 sm:p-6" style="background: linear-gradient(135deg, #0a1a0a 0%, #0f172a 50%, #0a1a0a 100%);">
 
-<!-- PWA Install Banner -->
-<div id="install-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9998;background:linear-gradient(135deg,#052e16,#15803d);border-top:2px solid #4ade80;padding:12px 16px;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;box-shadow:0 -4px 24px rgba(0,0,0,0.5);">
-  <div style="display:flex;align-items:center;gap:12px;">
-    <img src="icons/icon-48x48.png" width="40" height="40" style="border-radius:10px;" alt="Circuit Planner">
-    <div>
-      <p style="color:#4ade80;font-weight:900;font-size:14px;margin:0;">Installa Circuit Planner</p>
-      <p style="color:#86efac;font-size:12px;margin:0;">Accedi velocemente dal tuo dispositivo</p>
-    </div>
-  </div>
-  <div style="display:flex;gap:10px;align-items:center;">
-    <button id="install-btn" style="background:#4ade80;color:#052e16;border:none;padding:9px 20px;border-radius:8px;font-weight:900;font-size:13px;cursor:pointer;letter-spacing:0.5px;">📲 Installa</button>
-    <button id="install-dismiss" style="background:transparent;color:#86efac;border:1px solid #4ade8060;padding:9px 14px;border-radius:8px;font-size:12px;cursor:pointer;">✕</button>
-  </div>
-</div>
-
 <!-- PDF Overlay -->
 <div id="pdf-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;align-items:center;justify-content:center;flex-direction:column;gap:16px;">
   <div style="width:44px;height:44px;border:3px solid #1a3a1a;border-top-color:#4ade80;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
   <p style="color:#4ade80;font-family:sans-serif;font-size:18px;font-weight:900;letter-spacing:2px;text-transform:uppercase;">Generazione PDF...</p>
 </div>
-<style>@keyframes spin{to{transform:rotate(360deg);}}</style>
+<style>@keyframes spin{to{transform:rotate(360deg);}}
+@keyframes pulse-green{0%,100%{box-shadow:0 0 0 0 rgba(74,222,128,0.6);}50%{box-shadow:0 0 0 8px rgba(74,222,128,0);}}</style>
 
 <div class="max-w-5xl mx-auto" id="app">
 
   <!-- HEADER -->
   <div class="rounded-xl shadow-2xl p-5 sm:p-7 mb-6" style="background: linear-gradient(135deg, #15803d 0%, #000000 100%); border: 2px solid #4ade80;">
-    <h1 class="text-3xl sm:text-4xl font-black text-white text-center tracking-tight mb-1">🔄 CIRCUIT PLANNER</h1>
+    <div class="flex items-center justify-center gap-3 mb-1 flex-wrap">
+      <h1 class="text-3xl sm:text-4xl font-black text-white tracking-tight">🔄 CIRCUIT PLANNER</h1>
+      <button id="update-btn" onclick="applyUpdate()" style="display:none;background:linear-gradient(135deg,#4ade80,#22c55e);color:#052e16;border:none;padding:7px 16px;border-radius:10px;font-size:12px;font-weight:900;cursor:pointer;animation:pulse-green 1.5s infinite;white-space:nowrap;">⬆️ Aggiorna App</button>
+    </div>
     <p class="text-sm text-green-200 text-center font-semibold mb-5">Scheda Allenamento a Circuito</p>
     <div class="grid sm:grid-cols-2 gap-4">
       <div>
@@ -180,6 +121,10 @@
     <button id="generatePDFBtn" class="inline-flex items-center gap-3 px-8 py-4 text-white text-lg font-black rounded-xl shadow-2xl uppercase tracking-wide transition" style="background: linear-gradient(135deg, #15803d, #4ade80, #15803d); color:#052e16;">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
       Genera PDF
+    </button>
+    <br>
+    <button onclick="clearCacheAndReload()" class="inline-flex items-center gap-2 px-6 py-3 font-bold rounded-xl uppercase tracking-wide transition text-sm" style="background:transparent;border:2px solid #4ade80;color:#4ade80;">
+      🔄 Aggiorna App
     </button>
   </div>
 </div>
@@ -768,69 +713,58 @@ document.getElementById('generatePDFBtn').addEventListener('click', async () => 
 
 render();
 
-// ══ SERVICE WORKER REGISTRATION ══
+// ── Service Worker + Cache Update ──
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js')
-      .then(reg => {
-        console.log('[App] Service Worker registered:', reg.scope);
-        reg.addEventListener('updatefound', () => {
-          const newWorker = reg.installing;
-          newWorker.addEventListener('statechange', () => {
-            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              showToast('🔄 Aggiornamento disponibile. Ricarica per applicarlo.', '#1e293b', '#4ade80', 8000, () => window.location.reload());
-            }
-          });
+  let swReg = null;
+  let pendingWorker = null;
+
+  window.addEventListener('load', async () => {
+    try {
+      swReg = await navigator.serviceWorker.register('./sw.js');
+
+      // Worker già in attesa (tab riaperta)
+      if (swReg.waiting) { pendingWorker = swReg.waiting; showUpdateBtn(); }
+
+      // Nuovo worker trovato
+      swReg.addEventListener('updatefound', () => {
+        const nw = swReg.installing;
+        nw.addEventListener('statechange', () => {
+          if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+            pendingWorker = nw;
+            showUpdateBtn();
+          }
         });
-      })
-      .catch(err => console.warn('[App] SW registration failed:', err));
+      });
+
+      // Dopo skipWaiting ricarica la pagina
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!refreshing) { refreshing = true; window.location.reload(); }
+      });
+
+      // Controlla aggiornamenti ogni 30 min
+      setInterval(() => swReg.update(), 30 * 60 * 1000);
+    } catch(e) { console.warn('[SW]', e); }
   });
+
+  function showUpdateBtn() {
+    document.getElementById('update-btn').style.display = 'inline-block';
+  }
+
+  window.applyUpdate = function() {
+    if (pendingWorker) pendingWorker.postMessage({ type: 'SKIP_WAITING' });
+    else if (swReg?.waiting) swReg.waiting.postMessage({ type: 'SKIP_WAITING' });
+    else window.location.reload();
+  };
 }
 
-// ══ PWA INSTALL PROMPT ══
-let deferredInstallPrompt = null;
-
-window.addEventListener('beforeinstallprompt', e => {
-  e.preventDefault();
-  deferredInstallPrompt = e;
-  const banner = document.getElementById('install-banner');
-  const dismissed = localStorage.getItem('install-dismissed');
-  if (banner && !(dismissed && Date.now() - parseInt(dismissed) < 72 * 3600 * 1000)) {
-    banner.style.display = 'flex';
+// ── Aggiorna App: svuota cache e ricarica ──
+async function clearCacheAndReload() {
+  if ('caches' in window) {
+    const keys = await caches.keys();
+    await Promise.all(keys.map(k => caches.delete(k)));
   }
-});
-
-window.addEventListener('appinstalled', () => {
-  const banner = document.getElementById('install-banner');
-  if (banner) banner.style.display = 'none';
-  deferredInstallPrompt = null;
-  showToast('✅ Circuit Planner installato con successo!', '#052e16', '#4ade80');
-});
-
-document.getElementById('install-btn')?.addEventListener('click', async () => {
-  if (!deferredInstallPrompt) return;
-  deferredInstallPrompt.prompt();
-  const { outcome } = await deferredInstallPrompt.userChoice;
-  if (outcome === 'accepted') { const b = document.getElementById('install-banner'); if(b) b.style.display='none'; }
-  deferredInstallPrompt = null;
-});
-
-document.getElementById('install-dismiss')?.addEventListener('click', () => {
-  const banner = document.getElementById('install-banner');
-  if (banner) banner.style.display = 'none';
-  localStorage.setItem('install-dismissed', Date.now());
-});
-
-function showToast(msg, bg, color, duration = 3500, onClick = null) {
-  const t = document.createElement('div');
-  t.style.cssText = `position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:${bg};color:${color};padding:12px 22px;border-radius:12px;font-family:sans-serif;font-size:14px;font-weight:700;z-index:99999;box-shadow:0 8px 32px rgba(0,0,0,0.4);border:2px solid ${color}40;transition:transform 0.3s cubic-bezier(.34,1.56,.64,1);cursor:${onClick?'pointer':'default'};max-width:90vw;text-align:center;`;
-  t.textContent = msg;
-  if (onClick) t.addEventListener('click', onClick);
-  document.body.appendChild(t);
-  requestAnimationFrame(() => {
-    t.style.transform = 'translateX(-50%) translateY(0)';
-    setTimeout(() => { t.style.transform='translateX(-50%) translateY(80px)'; setTimeout(()=>t.remove(),300); }, duration);
-  });
+  window.location.reload(true);
 }
 </script>
 </body>
