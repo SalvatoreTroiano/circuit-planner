@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>Circuit Planner</title>
+
+<!-- ══ PWA / Meta ══ -->
+<meta name="description" content="Pianificatore di schede allenamento a circuito per personal trainer. Crea, organizza e genera PDF professionali.">
+<meta name="keywords" content="personal trainer, allenamento, circuito, fitness, scheda, PDF, workout">
+<meta name="author" content="Circuit Planner">
+<meta name="robots" content="index, follow">
+
+<!-- ══ PWA Manifest & Theme ══ -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#15803d">
+<meta name="background-color" content="#0a1a0a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Circuit Planner">
+<meta name="application-name" content="Circuit Planner">
+<meta name="msapplication-TileColor" content="#052e16">
+<meta name="msapplication-TileImage" content="icons/icon-144x144.png">
+<meta name="msapplication-config" content="browserconfig.xml">
+
+<!-- ══ Favicon & Icons ══ -->
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/icon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32x32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="icons/icon-48x48.png">
+<link rel="apple-touch-icon" href="icons/icon-180x180.png">
+<link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152x152.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180x180.png">
+<link rel="apple-touch-icon" sizes="167x167" href="icons/icon-192x192.png">
+
+<!-- ══ Open Graph ══ -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Circuit Planner — Schede Allenamento Professionali">
+<meta property="og:description" content="Crea schede di allenamento a circuito e genera PDF professionali per i tuoi atleti.">
+<meta property="og:image" content="icons/icon-512x512.png">
+<meta property="og:locale" content="it_IT">
+
+<!-- ══ Twitter Card ══ -->
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Circuit Planner">
+<meta name="twitter:description" content="Pianificatore di allenamento a circuito con generazione PDF.">
+<meta name="twitter:image" content="icons/icon-512x512.png">
+
+<!-- ══ Apple Splash Screens ══ -->
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<!-- ══ Scripts ══ -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  .circuit-block {
+    background: linear-gradient(135deg, #1a2e1a 0%, #0a0a0a 100%);
+    border: 2px solid #4ade80;
+    border-radius: 12px;
+    margin-bottom: 28px;
+    overflow: hidden;
+  }
+  .circuit-header {
+    background: linear-gradient(135deg, #15803d 0%, #052e16 100%);
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .rounds-badge {
+    background: #4ade80;
+    color: #052e16;
+    font-weight: 900;
+    font-size: 1.1rem;
+    padding: 6px 18px;
+    border-radius: 50px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+  }
+  .exercise-row {
+    border-bottom: 1px solid #1f3b1f;
+    padding: 12px 18px;
+    background: rgba(74,222,128,0.03);
+  }
+  .exercise-row:last-child { border-bottom: none; }
+  .exercise-row:nth-child(even) { background: rgba(74,222,128,0.06); }
+
+  .circuit-spacer {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 10px 0 22px;
+    color: #4ade80;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .circuit-spacer::before, .circuit-spacer::after {
+    content: '';
+    flex: 1;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #4ade80, transparent);
+  }
+
+  select option { background: #1e293b; color: white; }
+  
+  .tag-mobility  { background:#d1fae5; color:#065f46; border-left:4px solid #10b981; }
+  .tag-strength  { background:#fee2e2; color:#7f1d1d; border-left:4px solid #ef4444; }
+  .tag-core_power { background:#fef3c7; color:#78350f; border-left:4px solid #f59e0b; }
+  .tag-cardio    { background:#dbeafe; color:#1e3a8a; border-left:4px solid #3b82f6; }
+
+  /* PDF Print styles */
+  @media print {
+    body { background: white !important; color: black !important; }
+  }
+</style>
+</head>
+<body class="min-h-screen p-4 sm:p-6" style="background: linear-gradient(135deg, #0a1a0a 0%, #0f172a 50%, #0a1a0a 100%);">
+
+<!-- PWA Install Banner -->
+<div id="install-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9998;background:linear-gradient(135deg,#052e16,#15803d);border-top:2px solid #4ade80;padding:12px 16px;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;box-shadow:0 -4px 24px rgba(0,0,0,0.5);">
+  <div style="display:flex;align-items:center;gap:12px;">
+    <img src="icons/icon-48x48.png" width="40" height="40" style="border-radius:10px;" alt="Circuit Planner">
+    <div>
+      <p style="color:#4ade80;font-weight:900;font-size:14px;margin:0;">Installa Circuit Planner</p>
+      <p style="color:#86efac;font-size:12px;margin:0;">Accedi velocemente dal tuo dispositivo</p>
+    </div>
+  </div>
+  <div style="display:flex;gap:10px;align-items:center;">
+    <button id="install-btn" style="background:#4ade80;color:#052e16;border:none;padding:9px 20px;border-radius:8px;font-weight:900;font-size:13px;cursor:pointer;letter-spacing:0.5px;">📲 Installa</button>
+    <button id="install-dismiss" style="background:transparent;color:#86efac;border:1px solid #4ade8060;padding:9px 14px;border-radius:8px;font-size:12px;cursor:pointer;">✕</button>
+  </div>
+</div>
+
+<!-- PDF Overlay -->
+<div id="pdf-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;align-items:center;justify-content:center;flex-direction:column;gap:16px;">
+  <div style="width:44px;height:44px;border:3px solid #1a3a1a;border-top-color:#4ade80;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+  <p style="color:#4ade80;font-family:sans-serif;font-size:18px;font-weight:900;letter-spacing:2px;text-transform:uppercase;">Generazione PDF...</p>
+</div>
+<style>@keyframes spin{to{transform:rotate(360deg);}}</style>
+
+<div class="max-w-5xl mx-auto" id="app">
+
+  <!-- HEADER -->
+  <div class="rounded-xl shadow-2xl p-5 sm:p-7 mb-6" style="background: linear-gradient(135deg, #15803d 0%, #000000 100%); border: 2px solid #4ade80;">
+    <h1 class="text-3xl sm:text-4xl font-black text-white text-center tracking-tight mb-1">🔄 CIRCUIT PLANNER</h1>
+    <p class="text-sm text-green-200 text-center font-semibold mb-5">Scheda Allenamento a Circuito</p>
+    <div class="grid sm:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-xs font-bold text-white mb-2 uppercase tracking-wide">🏃 Atleta</label>
+        <input id="clientName" type="text" class="w-full px-4 py-3 bg-white/90 border-2 border-green-300 rounded-lg focus:border-green-400 focus:outline-none font-semibold text-lg" placeholder="Nome dell'atleta" />
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-white mb-2 uppercase tracking-wide">🎯 Logo PT</label>
+        <label for="logoInput" class="flex items-center justify-center w-full px-4 py-3 bg-white/20 border-2 border-white/40 border-dashed rounded-lg cursor-pointer hover:bg-white/30 transition">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <span class="text-sm text-white font-semibold ml-2">Upload Logo</span>
+          <input id="logoInput" type="file" accept="image/*" class="hidden" />
+        </label>
+      </div>
+    </div>
+    <div id="logoPreviewWrap" class="hidden mt-4 pt-4 border-t border-white/30">
+      <p class="text-xs text-white font-semibold mb-2 text-center">Preview Logo</p>
+      <img id="logoPreview" alt="Logo" class="max-w-32 max-h-20 mx-auto border-2 border-white/50 rounded bg-white/10 p-2" />
+    </div>
+  </div>
+
+  <!-- DAYS CONTAINER -->
+  <div id="daysContainer"></div>
+
+  <!-- BOTTOM ACTIONS -->
+  <div class="text-center mt-6 space-y-3">
+    <button id="generatePDFBtn" class="inline-flex items-center gap-3 px-8 py-4 text-white text-lg font-black rounded-xl shadow-2xl uppercase tracking-wide transition" style="background: linear-gradient(135deg, #15803d, #4ade80, #15803d); color:#052e16;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Genera PDF
+    </button>
+  </div>
+</div>
+
+<script>
+const state = {
+  clientName: '',
+  logo: '',
+  days: [
+    { id:1, name:'Lunedì',    circuits:[] },
+    { id:2, name:'Martedì',   circuits:[] },
+    { id:3, name:'Mercoledì', circuits:[] },
+    { id:4, name:'Giovedì',   circuits:[] },
+    { id:5, name:'Venerdì',   circuits:[] },
+    { id:6, name:'Sabato',    circuits:[] },
+    { id:7, name:'Domenica',  circuits:[] }
+  ]
+};
+
+const EXERCISE_LIBRARY = {
+  mobility: [
+    "FOAM ROLLER","SHOULDER","LEG LOWER","LEG LOWER RGR","CUFFIE ROTATORI RNT",
+    "ANKLE MOBILITY","ANKLE MOBILITY LATERAL","CAT COW","TOE TOUCH",
+    "SL DEADLIFT","SUMO SQUAT","LEG LOWER LATERAL"
+  ],
+  strength: [
+    "PUSH UP","BENCH PRESS","BENCH PRESS BB","CROCI","SQUAT PRESS OUT",
+    "GOBLET SQUAT","BACK SQUAT","ROW","ROW BB","ROW 1 ARM",
+    "SL DEADLIFT","TRAP BAR","DEADLIFT KETBALL","CURL"
+  ],
+  core_power: [
+    "PLANK","SIDE PLANK","HOLLOW HOLD","DEAD BUG","BIRD DOG",
+    "RUSSIAN TWIST","MOUNTAIN CLIMBERS","JUMPING SQUAT","BOX JUMP",
+    "BURPEES","MEDICINE BALL SLAM","KETBALL SWING"
+  ],
+  cardio: [
+    "CORSA SUL POSTO","JUMPING JACKS","SKIP","CORDA","BIKE ERGOMETRO",
+    "ROWING ERGOMETRO","STEP UP","HIGH KNEES","LATERAL SHUFFLE"
+  ]
+};
+
+const TYPE_LABELS = {
+  mobility:   { icon:'🧘', label:'MOBILITY',   color:'text-emerald-400', border:'border-emerald-500', bg:'bg-emerald-700' },
+  strength:   { icon:'💪', label:'STRENGTH',   color:'text-red-400',     border:'border-red-500',     bg:'bg-red-700'     },
+  core_power: { icon:'⚡', label:'CORE/POWER', color:'text-amber-400',   border:'border-amber-500',   bg:'bg-amber-700'   },
+  cardio:     { icon:'🏃', label:'CARDIO',     color:'text-blue-400',    border:'border-blue-500',    bg:'bg-blue-700'    }
+};
+
+// Emoji aggiuntive per strength (superiore/inferiore)
+const STRENGTH_ICONS = {
+  upper: '💪',   // braccio/petto
+  lower: '🦵'    // gamba
+};
+
+const REPS_OPTIONS   = ['','5','6','8','10','12','15','20','30 sec','45 sec','60 sec','20 sec','15 sec','10 sec'];
+const REST_OPTIONS   = ['','15 sec','30 sec','45 sec','1 min','1.30 min','2 min','2.30 min','3 min'];
+const ROUNDS_OPTIONS = [1,2,3,4,5,6];
+
+// ── LOGO ──
+document.getElementById('clientName').addEventListener('input', e => state.clientName = e.target.value);
+document.getElementById('logoInput').addEventListener('change', e => {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    state.logo = ev.target.result;
+    document.getElementById('logoPreview').src = state.logo;
+    document.getElementById('logoPreviewWrap').classList.remove('hidden');
+  };
+  r.readAsDataURL(f);
+});
+
+// ── RENDER ──
+function render() {
+  const container = document.getElementById('daysContainer');
+  container.innerHTML = '';
+  state.days.forEach((day, di) => {
+    container.appendChild(buildDay(day, di));
+  });
+}
+
+function buildDay(day, di) {
+  const wrap = document.createElement('div');
+  wrap.className = 'mb-8 pb-8 border-b-2 border-green-900 last:border-b-0';
+
+  // Day header
+  const hdr = document.createElement('div');
+  hdr.className = 'flex justify-between items-center mb-4 flex-wrap gap-2';
+  const title = document.createElement('h3');
+  title.className = 'text-xl font-black uppercase tracking-wider';
+  title.style.color = '#4ade80';
+  title.textContent = day.name;
+  hdr.appendChild(title);
+  wrap.appendChild(hdr);
+
+  // Circuits
+  if (day.circuits.length === 0) {
+    const empty = document.createElement('p');
+    empty.className = 'text-slate-500 italic ml-4 mb-4 font-semibold';
+    empty.textContent = '💤 Giorno di riposo';
+    wrap.appendChild(empty);
+  } else {
+    day.circuits.forEach((circuit, ci) => {
+      if (ci > 0) {
+        // Spacer tra circuiti
+        const spacer = document.createElement('div');
+        spacer.className = 'circuit-spacer';
+        spacer.textContent = `CIRCUITO ${ci + 1}`;
+        wrap.appendChild(spacer);
+      }
+      wrap.appendChild(buildCircuit(circuit, di, ci));
+    });
+  }
+
+  // Add circuit button
+  const addCircBtn = document.createElement('button');
+  addCircBtn.className = 'mt-3 flex items-center gap-2 px-5 py-2.5 font-bold rounded-xl text-sm uppercase tracking-wide transition shadow-lg border-2 border-green-600 text-green-400 hover:bg-green-900/40';
+  addCircBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Aggiungi Circuito`;
+  addCircBtn.addEventListener('click', () => {
+    day.circuits.push({ rounds: 3, restBetweenRounds: '2 min', exercises: [] });
+    render();
+  });
+  wrap.appendChild(addCircBtn);
+
+  return wrap;
+}
+
+function buildCircuit(circuit, di, ci) {
+  const block = document.createElement('div');
+  block.className = 'circuit-block';
+
+  // Circuit header
+  const hdr = document.createElement('div');
+  hdr.className = 'circuit-header';
+
+  const left = document.createElement('div');
+  left.className = 'flex items-center gap-3 flex-wrap';
+
+  const circTitle = document.createElement('span');
+  circTitle.className = 'text-white font-black text-base uppercase tracking-wider';
+  circTitle.textContent = `🔄 Circuito ${ci + 1}`;
+  left.appendChild(circTitle);
+
+  // Rounds selector
+  const roundsLabel = document.createElement('label');
+  roundsLabel.className = 'text-green-200 text-sm font-bold ml-2';
+  roundsLabel.textContent = 'Giri:';
+  left.appendChild(roundsLabel);
+
+  const roundsBadge = document.createElement('div');
+  roundsBadge.className = 'rounds-badge';
+  const roundsSel = document.createElement('select');
+  roundsSel.style.cssText = 'background:transparent;border:none;outline:none;font-weight:900;font-size:1.1rem;color:#052e16;cursor:pointer;';
+  ROUNDS_OPTIONS.forEach(n => {
+    const opt = document.createElement('option');
+    opt.value = n; opt.textContent = n;
+    if (circuit.rounds === n) opt.selected = true;
+    opt.style.background = '#052e16'; opt.style.color = '#4ade80';
+    roundsSel.appendChild(opt);
+  });
+  roundsSel.addEventListener('change', e => { circuit.rounds = parseInt(e.target.value); render(); });
+  roundsBadge.appendChild(roundsSel);
+  const roundsUnit = document.createElement('span');
+  roundsUnit.style.cssText = 'font-size:0.75rem;font-weight:700;color:#052e16;';
+  roundsUnit.textContent = 'GIRI';
+  roundsBadge.appendChild(roundsUnit);
+  left.appendChild(roundsBadge);
+
+  // Rest between rounds
+  const restLabel = document.createElement('label');
+  restLabel.className = 'text-green-200 text-xs font-bold ml-2 whitespace-nowrap';
+  restLabel.textContent = 'Rec. giri:';
+  left.appendChild(restLabel);
+  const restSel = document.createElement('select');
+  restSel.className = 'px-2 py-1 text-sm rounded font-semibold border-2 border-green-600 text-white';
+  restSel.style.background = '#052e16';
+  REST_OPTIONS.forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v; opt.textContent = v || '— Non impostato —';
+    if (circuit.restBetweenRounds === v) opt.selected = true;
+    restSel.appendChild(opt);
+  });
+  restSel.addEventListener('change', e => { circuit.restBetweenRounds = e.target.value; });
+  left.appendChild(restSel);
+
+  hdr.appendChild(left);
+
+  // Remove circuit button
+  const removeCircBtn = document.createElement('button');
+  removeCircBtn.className = 'ml-auto px-3 py-1.5 rounded-lg text-xs font-bold uppercase border border-red-600 text-red-400 hover:bg-red-900/40 transition';
+  removeCircBtn.textContent = '✕ Rimuovi';
+  removeCircBtn.addEventListener('click', () => {
+    state.days[di].circuits.splice(ci, 1);
+    render();
+  });
+  hdr.appendChild(removeCircBtn);
+
+  block.appendChild(hdr);
+
+  // Rounds instructions banner
+  const banner = document.createElement('div');
+  banner.className = 'flex items-center gap-3 px-4 py-2 text-xs font-bold uppercase tracking-wider border-b border-green-900';
+  banner.style.background = 'rgba(74,222,128,0.08)';
+  banner.style.color = '#4ade80';
+  banner.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Ripeti tutti gli esercizi per <span id="rounds-display-${di}-${ci}" style="background:#4ade80;color:#052e16;border-radius:4px;padding:1px 8px;font-size:1rem;">${circuit.rounds}</span> giri completi`;
+  block.appendChild(banner);
+
+  // Exercises
+  const exList = document.createElement('div');
+  circuit.exercises.forEach((ex, ei) => {
+    exList.appendChild(buildExercise(ex, di, ci, ei));
+  });
+  block.appendChild(exList);
+
+  // Add exercise button (max 4)
+  const canAdd = circuit.exercises.length < 4;
+  const addBtn = document.createElement('button');
+  addBtn.className = `flex items-center gap-2 w-full px-4 py-3 text-sm font-bold uppercase tracking-wide transition border-t-2 border-dashed border-green-900 ${canAdd ? 'hover:bg-green-900/20 text-green-500' : 'opacity-30 cursor-not-allowed text-slate-500'}`;
+  addBtn.style.background = 'transparent';
+  addBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> ${canAdd ? 'Aggiungi Esercizio' : 'Massimo 4 esercizi per circuito'}`;
+  if (canAdd) {
+    addBtn.addEventListener('click', () => {
+      circuit.exercises.push({ type:'', subType:'', name:'', reps:'', repsCustom:'', rest:'', restCustom:'', notes:'' });
+      render();
+    });
+  }
+  block.appendChild(addBtn);
+
+  return block;
+}
+
+function buildExercise(ex, di, ci, ei) {
+  const row = document.createElement('div');
+  row.className = 'exercise-row';
+
+  // Top row: number + type selects + name
+  const topRow = document.createElement('div');
+  topRow.className = 'flex flex-wrap gap-2 items-center mb-2';
+
+  // Station number badge
+  const num = document.createElement('div');
+  num.className = 'w-7 h-7 rounded-full flex items-center justify-center font-black text-sm shrink-0';
+  num.style.cssText = 'background:#4ade80;color:#052e16;';
+  num.textContent = ei + 1;
+  topRow.appendChild(num);
+
+  // TYPE SELECT
+  const typeSelect = document.createElement('select');
+  const tMeta = ex.type ? TYPE_LABELS[ex.type] : null;
+  typeSelect.className = `px-2 py-2 text-xs font-bold rounded border-2 ${tMeta ? tMeta.border + ' ' + tMeta.bg : 'border-slate-500 bg-slate-600'} text-white focus:outline-none`;
+  [
+    {value:'', label:'Tipo —'},
+    {value:'mobility',   label:'🧘 MOBILITY'},
+    {value:'strength',   label:'💪 STRENGTH'},
+    {value:'core_power', label:'⚡ CORE/POWER'},
+    {value:'cardio',     label:'🏃 CARDIO'}
+  ].forEach(o => {
+    const opt = document.createElement('option');
+    opt.value = o.value; opt.textContent = o.label;
+    if (ex.type === o.value) opt.selected = true;
+    typeSelect.appendChild(opt);
+  });
+  typeSelect.addEventListener('change', e => { ex.type = e.target.value; ex.name = ''; render(); });
+  topRow.appendChild(typeSelect);
+
+  // STRENGTH sub-type (upper/lower) — only visible when strength
+  if (ex.type === 'strength') {
+    const subSel = document.createElement('select');
+    subSel.className = 'px-2 py-2 text-xs font-bold rounded border-2 border-red-500 bg-red-800 text-white focus:outline-none';
+    [{value:'', label:'— Zona —'}, {value:'upper', label:'💪 Superiore'}, {value:'lower', label:'🦵 Inferiore'}].forEach(o => {
+      const opt = document.createElement('option');
+      opt.value = o.value; opt.textContent = o.label;
+      if (ex.subType === o.value) opt.selected = true;
+      subSel.appendChild(opt);
+    });
+    subSel.addEventListener('change', e => { ex.subType = e.target.value; });
+    topRow.appendChild(subSel);
+  }
+
+  // LIBRARY SELECT (based on type)
+  if (ex.type && EXERCISE_LIBRARY[ex.type]) {
+    const libSel = document.createElement('select');
+    const meta = TYPE_LABELS[ex.type];
+    libSel.className = `px-2 py-2 text-xs font-bold rounded border-2 ${meta.border} ${meta.bg} text-white focus:outline-none max-w-[180px]`;
+    const defOpt = document.createElement('option');
+    defOpt.value = ''; defOpt.textContent = `${meta.icon} Scegli...`;
+    libSel.appendChild(defOpt);
+    EXERCISE_LIBRARY[ex.type].forEach(name => {
+      const opt = document.createElement('option');
+      opt.value = name; opt.textContent = name;
+      if (ex.name === name) opt.selected = true;
+      libSel.appendChild(opt);
+    });
+    libSel.addEventListener('change', e => { ex.name = e.target.value; render(); });
+    topRow.appendChild(libSel);
+  }
+
+  // NAME INPUT (free text)
+  const nameInput = document.createElement('input');
+  nameInput.type = 'text';
+  nameInput.value = ex.name;
+  nameInput.placeholder = 'Nome esercizio...';
+  nameInput.className = 'flex-1 min-w-[160px] px-3 py-2 text-sm rounded border-2 border-slate-600 bg-slate-700 text-white focus:border-green-500 focus:outline-none font-semibold';
+  nameInput.addEventListener('input', e => { ex.name = e.target.value; });
+  topRow.appendChild(nameInput);
+
+  // REMOVE exercise
+  const removeBtn = document.createElement('button');
+  removeBtn.className = 'ml-auto w-9 h-9 flex items-center justify-center rounded-lg border-2 border-red-700 text-red-400 hover:bg-red-900/40 transition shrink-0';
+  removeBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+  removeBtn.addEventListener('click', () => { state.days[di].circuits[ci].exercises.splice(ei, 1); render(); });
+  topRow.appendChild(removeBtn);
+
+  row.appendChild(topRow);
+
+  // Bottom row: reps + rest + notes
+  const bottomRow = document.createElement('div');
+  bottomRow.className = 'flex flex-wrap gap-2 items-center mt-1 ml-9';
+
+  // REPS
+  const repsLabel = document.createElement('span');
+  repsLabel.className = 'text-xs text-slate-400 font-bold';
+  repsLabel.textContent = 'Rip.:';
+  bottomRow.appendChild(repsLabel);
+
+  const repsSel = document.createElement('select');
+  repsSel.className = 'px-2 py-1.5 text-sm rounded border-2 border-slate-600 bg-slate-700 text-white focus:border-green-500 focus:outline-none font-semibold';
+  REPS_OPTIONS.forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v; opt.textContent = v || '— —';
+    if (ex.reps === v) opt.selected = true;
+    repsSel.appendChild(opt);
+  });
+  repsSel.addEventListener('change', e => { ex.reps = e.target.value; ex.repsCustom = ''; repsCustom.value = ''; });
+  bottomRow.appendChild(repsSel);
+
+  const repsCustom = document.createElement('input');
+  repsCustom.type = 'text';
+  repsCustom.placeholder = 'o scrivi...';
+  repsCustom.value = ex.repsCustom || '';
+  repsCustom.className = 'w-28 px-2 py-1.5 text-sm rounded border-2 border-green-700 bg-slate-700 text-white focus:border-green-500 focus:outline-none font-semibold placeholder-slate-500';
+  repsCustom.addEventListener('input', e => { ex.repsCustom = e.target.value; });
+  bottomRow.appendChild(repsCustom);
+
+  // REST
+  const restLabel = document.createElement('span');
+  restLabel.className = 'text-xs text-slate-400 font-bold ml-2';
+  restLabel.textContent = 'Rec.:';
+  bottomRow.appendChild(restLabel);
+
+  const restSel = document.createElement('select');
+  restSel.className = 'px-2 py-1.5 text-sm rounded border-2 border-slate-600 bg-slate-700 text-white focus:border-green-500 focus:outline-none font-semibold';
+  REST_OPTIONS.forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v; opt.textContent = v || '— —';
+    if (ex.rest === v) opt.selected = true;
+    restSel.appendChild(opt);
+  });
+  restSel.addEventListener('change', e => { ex.rest = e.target.value; ex.restCustom = ''; restCustom.value = ''; });
+  bottomRow.appendChild(restSel);
+
+  const restCustom = document.createElement('input');
+  restCustom.type = 'text';
+  restCustom.placeholder = 'o scrivi...';
+  restCustom.value = ex.restCustom || '';
+  restCustom.className = 'w-28 px-2 py-1.5 text-sm rounded border-2 border-green-700 bg-slate-700 text-white focus:border-green-500 focus:outline-none font-semibold placeholder-slate-500';
+  restCustom.addEventListener('input', e => { ex.restCustom = e.target.value; });
+  bottomRow.appendChild(restCustom);
+
+  row.appendChild(bottomRow);
+
+  // NOTES row
+  const notesRow = document.createElement('div');
+  notesRow.className = 'mt-2 ml-9';
+  const notesInput = document.createElement('input');
+  notesInput.type = 'text';
+  notesInput.value = ex.notes || '';
+  notesInput.placeholder = '📝 Note (tecnica, varianti, avvertenze...)';
+  notesInput.className = 'w-full px-3 py-2 text-sm rounded border-2 border-slate-600 bg-slate-700/60 text-white focus:border-green-500 focus:outline-none font-semibold placeholder-slate-500';
+  notesInput.addEventListener('input', e => { ex.notes = e.target.value; });
+  notesRow.appendChild(notesInput);
+  row.appendChild(notesRow);
+
+  return row;
+}
+
+// ── PDF GENERATION (jsPDF) ──
+document.getElementById('generatePDFBtn').addEventListener('click', async () => {
+  const overlay = document.getElementById('pdf-overlay');
+  overlay.style.display = 'flex';
+  await new Promise(r => setTimeout(r, 80));
+
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const W = 210, H = 297, M = 13, CW = W - M * 2;
+    const clientName = state.clientName || 'Atleta';
+    const logoImg = document.getElementById('logoPreview');
+    const hasLogo = logoImg.src && logoImg.style.display !== 'none' && logoImg.src !== window.location.href;
+
+    // ── logo dimensions ──
+    let logoW = 0, logoH = 0;
+    if (hasLogo) {
+      await new Promise(resolve => {
+        const tmp = new Image();
+        tmp.onload = () => {
+          const maxW = 25, maxH = 20, r = tmp.naturalWidth / tmp.naturalHeight;
+          if (r >= 1) { logoW = maxW; logoH = maxW / r; }
+          else        { logoH = maxH; logoW = maxH * r; }
+          resolve();
+        };
+        tmp.onerror = resolve;
+        tmp.src = logoImg.src;
+      });
+    }
+
+    let pageNum = 1;
+
+    function drawHeader(isFirst) {
+      // green/black gradient simulation
+      doc.setFillColor(21, 128, 61);  doc.rect(0, 0, W, 36, 'F');
+      doc.setFillColor(5, 46, 22);    doc.rect(W/2, 0, W/2, 36, 'F');
+      doc.setDrawColor(74, 222, 128); doc.setLineWidth(0.8); doc.line(0, 36, W, 36);
+
+      if (hasLogo && logoW > 0) {
+        const lx = M, ly = (36 - logoH) / 2;
+        try { doc.addImage(logoImg.src, 'JPEG', lx, ly, logoW, logoH, '', 'FAST'); }
+        catch(e) { try { doc.addImage(logoImg.src, 'PNG', lx, ly, logoW, logoH, '', 'FAST'); } catch(e2){} }
+      }
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(16); doc.setTextColor(74, 222, 128);
+      doc.text('CIRCUIT PLANNER', W/2, 14, { align: 'center' });
+      doc.setFontSize(8); doc.setTextColor(134, 239, 172);
+      doc.text('SCHEDA ALLENAMENTO A CIRCUITO', W/2, 21, { align: 'center' });
+
+      if (clientName) {
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(255, 255, 255);
+        doc.text(clientName.toUpperCase(), W - M, 30, { align: 'right' });
+      }
+    }
+
+    function newPage() {
+      doc.addPage();
+      drawHeader(false);
+      return 44;
+    }
+
+    drawHeader(true);
+    let y = 44;
+
+    const activeDays = state.days.filter(day => day.circuits.length > 0 && day.circuits.some(c => c.exercises.length > 0));
+
+    if (activeDays.length === 0) {
+      doc.setFont('helvetica', 'italic'); doc.setFontSize(11); doc.setTextColor(160, 160, 160);
+      doc.text('Nessun circuito inserito.', W/2, 140, { align: 'center' });
+    }
+
+    const TYPE_COLORS = {
+      mobility:   { r:16,  g:185, b:129, lr:209, lg:250, lb:229, tr:6,   tg:95,  tb:70  },
+      strength:   { r:239, g:68,  b:68,  lr:254, lg:226, lb:226, tr:127, tg:29,  tb:29  },
+      core_power: { r:245, g:158, b:11,  lr:254, lg:243, lb:199, tr:120, tg:53,  tb:15  },
+      cardio:     { r:59,  g:130, b:246, lr:219, lg:234, lb:254, tr:30,  tg:58,  tb:138 }
+    };
+    const TYPE_LABELS_PDF = { mobility:'MOBILITY', strength:'STRENGTH', core_power:'CORE/POWER', cardio:'CARDIO' };
+    const TYPE_ICONS_PDF  = { mobility:'🧘', strength:'💪', core_power:'⚡', cardio:'🏃' };
+
+    activeDays.forEach(day => {
+      // Day header bar
+      if (y > H - 50) { y = newPage(); }
+      doc.setFillColor(21, 128, 61); doc.roundedRect(M, y, CW, 11, 2, 2, 'F');
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(255, 255, 255);
+      doc.text(day.name.toUpperCase(), M + 5, y + 7.5);
+      y += 14;
+
+      const activeCircuits = day.circuits.filter(c => c.exercises.length > 0);
+
+      activeCircuits.forEach((circuit, ci) => {
+        if (y > H - 60) { y = newPage(); }
+
+        // Circuit header
+        doc.setFillColor(21, 128, 61); doc.roundedRect(M, y, CW, 10, 2, 2, 'F');
+        doc.setFillColor(5, 46, 22);   doc.roundedRect(M + CW/2, y, CW/2, 10, 2, 2, 'F');
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(255, 255, 255);
+        doc.text(`CIRCUITO ${ci + 1}`, M + 4, y + 6.8);
+
+        // Rounds badge
+        const roundsTxt = `${circuit.rounds} GIRI`;
+        doc.setFillColor(74, 222, 128); doc.roundedRect(W - M - 28, y + 1.5, 27, 7, 3, 3, 'F');
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(5, 46, 22);
+        doc.text(roundsTxt, W - M - 14.5, y + 7, { align: 'center' });
+        y += 13;
+
+        // "Ripeti X giri" instruction banner
+        doc.setFillColor(220, 252, 231); doc.roundedRect(M, y, CW, 8, 1, 1, 'F');
+        doc.setDrawColor(74, 222, 128); doc.setLineWidth(0.3); doc.roundedRect(M, y, CW, 8, 1, 1, 'S');
+        doc.setFillColor(74, 222, 128); doc.rect(M, y, 2.5, 8, 'F');
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(22, 101, 52);
+        const instrTxt = `RIPETI TUTTI GLI ESERCIZI PER ${circuit.rounds} GIRI COMPLETI${circuit.restBetweenRounds ? '  ·  Recupero tra giri: ' + circuit.restBetweenRounds : ''}`;
+        doc.text(instrTxt, M + 5, y + 5.3);
+        y += 11;
+
+        // Exercises table header
+        const colX = { num: M, name: M + 8, type: M + 68, reps: M + 108, rest: M + 130, notes: M + 155 };
+        doc.setFillColor(235, 235, 235); doc.rect(M, y, CW, 7, 'F');
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(6.5); doc.setTextColor(80, 80, 80);
+        doc.text('#',           colX.num + 2.5, y + 5, { align: 'center' });
+        doc.text('ESERCIZIO',   colX.name,  y + 5);
+        doc.text('TIPO',        colX.type,  y + 5);
+        doc.text('RIP.',        colX.reps,  y + 5);
+        doc.text('REC.',        colX.rest,  y + 5);
+        doc.text('NOTE',        colX.notes, y + 5);
+        y += 7;
+
+        circuit.exercises.forEach((ex, ei) => {
+          const notesLines = ex.notes ? doc.splitTextToSize(ex.notes, 48) : [];
+          const rowH = Math.max(9, notesLines.length * 3.8 + 5);
+          if (y + rowH > H - 18) { y = newPage(); }
+
+          // Row background
+          doc.setFillColor(...(ei % 2 === 0 ? [255,255,255] : [248,255,248]));
+          doc.rect(M, y, CW, rowH, 'F');
+          doc.setDrawColor(200, 240, 210); doc.setLineWidth(0.15);
+          doc.rect(M, y, CW, rowH, 'S');
+
+          // Number circle
+          doc.setFillColor(21, 128, 61); doc.circle(colX.num + 2.5, y + rowH/2, 2.8, 'F');
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(7); doc.setTextColor(255, 255, 255);
+          doc.text(String(ei + 1), colX.num + 2.5, y + rowH/2 + 2.3, { align: 'center' });
+
+          // Exercise name
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(20, 20, 20);
+          doc.text(doc.splitTextToSize(ex.name || '—', 56), colX.name, y + 6);
+
+          // Type tag
+          if (ex.type && TYPE_COLORS[ex.type]) {
+            const tc = TYPE_COLORS[ex.type];
+            const tagW = 33, tagH = 5;
+            doc.setFillColor(tc.lr, tc.lg, tc.lb);
+            doc.roundedRect(colX.type, y + (rowH-tagH)/2, tagW, tagH, 1, 1, 'F');
+            doc.setDrawColor(tc.r, tc.g, tc.b); doc.setLineWidth(0.2);
+            doc.roundedRect(colX.type, y + (rowH-tagH)/2, tagW, tagH, 1, 1, 'S');
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(6.5); doc.setTextColor(tc.tr, tc.tg, tc.tb);
+            const typeText = TYPE_LABELS_PDF[ex.type] + (ex.subType === 'upper' ? ' SUP.' : ex.subType === 'lower' ? ' INF.' : '');
+            doc.text(typeText, colX.type + tagW/2, y + (rowH-tagH)/2 + 3.5, { align: 'center' });
+          }
+
+          // Reps & Rest
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(40, 40, 40);
+          doc.text(ex.repsCustom || ex.reps || '—', colX.reps, y + 6);
+          doc.text(ex.restCustom || ex.rest || '—', colX.rest, y + 6);
+
+          // Notes
+          if (notesLines.length) {
+            doc.setFont('helvetica', 'italic'); doc.setFontSize(7); doc.setTextColor(100, 100, 100);
+            doc.text(notesLines, colX.notes, y + 6);
+          }
+
+          y += rowH;
+        });
+
+        // Spacer between circuits
+        y += ci < activeCircuits.length - 1 ? 10 : 8;
+      });
+
+      y += 6; // space between days
+    });
+
+    // Page numbers
+    const totalPages = doc.getNumberOfPages();
+    for (let p = 1; p <= totalPages; p++) {
+      doc.setPage(p);
+      doc.setDrawColor(74, 222, 128); doc.setLineWidth(0.3); doc.line(M, H - 9, W - M, H - 9);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(120, 120, 120);
+      doc.text(`Circuit Planner  ·  ${clientName}  ·  ${new Date().toLocaleDateString('it-IT')}`, M, H - 4);
+      doc.text(`${p} / ${totalPages}`, W - M, H - 4, { align: 'right' });
+    }
+
+    doc.save(`circuito_${(clientName).replace(/\s+/g,'_').toLowerCase()}.pdf`);
+  } catch(err) {
+    console.error(err);
+    alert('Errore PDF: ' + err.message);
+  }
+
+  overlay.style.display = 'none';
+});
+
+render();
+
+// ══ SERVICE WORKER REGISTRATION ══
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => {
+        console.log('[App] Service Worker registered:', reg.scope);
+        reg.addEventListener('updatefound', () => {
+          const newWorker = reg.installing;
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              showToast('🔄 Aggiornamento disponibile. Ricarica per applicarlo.', '#1e293b', '#4ade80', 8000, () => window.location.reload());
+            }
+          });
+        });
+      })
+      .catch(err => console.warn('[App] SW registration failed:', err));
+  });
+}
+
+// ══ PWA INSTALL PROMPT ══
+let deferredInstallPrompt = null;
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  const banner = document.getElementById('install-banner');
+  const dismissed = localStorage.getItem('install-dismissed');
+  if (banner && !(dismissed && Date.now() - parseInt(dismissed) < 72 * 3600 * 1000)) {
+    banner.style.display = 'flex';
+  }
+});
+
+window.addEventListener('appinstalled', () => {
+  const banner = document.getElementById('install-banner');
+  if (banner) banner.style.display = 'none';
+  deferredInstallPrompt = null;
+  showToast('✅ Circuit Planner installato con successo!', '#052e16', '#4ade80');
+});
+
+document.getElementById('install-btn')?.addEventListener('click', async () => {
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  const { outcome } = await deferredInstallPrompt.userChoice;
+  if (outcome === 'accepted') { const b = document.getElementById('install-banner'); if(b) b.style.display='none'; }
+  deferredInstallPrompt = null;
+});
+
+document.getElementById('install-dismiss')?.addEventListener('click', () => {
+  const banner = document.getElementById('install-banner');
+  if (banner) banner.style.display = 'none';
+  localStorage.setItem('install-dismissed', Date.now());
+});
+
+function showToast(msg, bg, color, duration = 3500, onClick = null) {
+  const t = document.createElement('div');
+  t.style.cssText = `position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:${bg};color:${color};padding:12px 22px;border-radius:12px;font-family:sans-serif;font-size:14px;font-weight:700;z-index:99999;box-shadow:0 8px 32px rgba(0,0,0,0.4);border:2px solid ${color}40;transition:transform 0.3s cubic-bezier(.34,1.56,.64,1);cursor:${onClick?'pointer':'default'};max-width:90vw;text-align:center;`;
+  t.textContent = msg;
+  if (onClick) t.addEventListener('click', onClick);
+  document.body.appendChild(t);
+  requestAnimationFrame(() => {
+    t.style.transform = 'translateX(-50%) translateY(0)';
+    setTimeout(() => { t.style.transform='translateX(-50%) translateY(80px)'; setTimeout(()=>t.remove(),300); }, duration);
+  });
+}
+</script>
+</body>
+</html>
