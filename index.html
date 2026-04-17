@@ -73,6 +73,49 @@
   .tag-core_power { background:#fef3c7; color:#78350f; border-left:4px solid #f59e0b; }
   .tag-cardio    { background:#dbeafe; color:#1e3a8a; border-left:4px solid #3b82f6; }
 
+  /* Mobility section */
+  .mobility-section {
+    background: linear-gradient(135deg, #0d2e1a 0%, #0a0a0a 100%);
+    border: 2px solid #10b981;
+    border-radius: 12px;
+    margin-bottom: 18px;
+    overflow: hidden;
+  }
+  .mobility-header {
+    background: linear-gradient(135deg, #065f46 0%, #022c22 100%);
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .mobility-exercise-row {
+    border-bottom: 1px solid #064e3b;
+    padding: 11px 18px;
+    background: rgba(16,185,129,0.04);
+  }
+  .mobility-exercise-row:last-child { border-bottom: none; }
+  .mobility-exercise-row:nth-child(even) { background: rgba(16,185,129,0.08); }
+
+  .mobility-circuits-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 14px 0 18px;
+    color: #4ade80;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .mobility-circuits-divider::before, .mobility-circuits-divider::after {
+    content: '';
+    flex: 1;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #4ade80, transparent);
+  }
+
   /* PDF Print styles */
   @media print {
     body { background: white !important; color: black !important; }
@@ -139,13 +182,13 @@ const state = {
   clientName: '',
   logo: '',
   days: [
-    { id:1, name:'Lunedì',    circuits:[] },
-    { id:2, name:'Martedì',   circuits:[] },
-    { id:3, name:'Mercoledì', circuits:[] },
-    { id:4, name:'Giovedì',   circuits:[] },
-    { id:5, name:'Venerdì',   circuits:[] },
-    { id:6, name:'Sabato',    circuits:[] },
-    { id:7, name:'Domenica',  circuits:[] }
+    { id:1, name:'Lunedì',    mobilityExercises:[], circuits:[] },
+    { id:2, name:'Martedì',   mobilityExercises:[], circuits:[] },
+    { id:3, name:'Mercoledì', mobilityExercises:[], circuits:[] },
+    { id:4, name:'Giovedì',   mobilityExercises:[], circuits:[] },
+    { id:5, name:'Venerdì',   mobilityExercises:[], circuits:[] },
+    { id:6, name:'Sabato',    mobilityExercises:[], circuits:[] },
+    { id:7, name:'Domenica',  mobilityExercises:[], circuits:[] }
   ]
 };
 
@@ -224,16 +267,66 @@ function buildDay(day, di) {
   hdr.appendChild(title);
   wrap.appendChild(hdr);
 
-  // Circuits
+  // ── MOBILITY SECTION ──
+  const mobSection = document.createElement('div');
+  mobSection.className = 'mobility-section';
+
+  const mobHeader = document.createElement('div');
+  mobHeader.className = 'mobility-header';
+  mobHeader.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span style="background:#10b981;color:#022c22;padding:4px 14px;border-radius:50px;font-weight:900;font-size:0.95rem;letter-spacing:1px;">🧘 MOBILITY</span>
+      <span style="color:#6ee7b7;font-size:0.75rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;">Riscaldamento & Mobilità Articolare</span>
+    </div>
+  `;
+  mobSection.appendChild(mobHeader);
+
+  // Mobility exercise list
+  const mobList = document.createElement('div');
+  if (day.mobilityExercises.length === 0) {
+    const emptyMob = document.createElement('p');
+    emptyMob.className = 'text-slate-500 italic px-5 py-3 text-sm font-semibold';
+    emptyMob.textContent = 'Nessun esercizio di mobilità — premi + per aggiungerne uno';
+    mobList.appendChild(emptyMob);
+  } else {
+    day.mobilityExercises.forEach((ex, ei) => {
+      mobList.appendChild(buildMobilityExercise(ex, di, ei));
+    });
+  }
+  mobSection.appendChild(mobList);
+
+  // Add mobility exercise button
+  const addMobBtn = document.createElement('button');
+  addMobBtn.className = 'flex items-center gap-2 w-full px-4 py-3 text-sm font-bold uppercase tracking-wide transition border-t-2 border-dashed border-emerald-900 hover:bg-emerald-900/20 text-emerald-400';
+  addMobBtn.style.background = 'transparent';
+  addMobBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Aggiungi Esercizio Mobility`;
+  addMobBtn.addEventListener('click', () => {
+    day.mobilityExercises.push({ name: '', reps: '', repsCustom: '', notes: '' });
+    render();
+  });
+  mobSection.appendChild(addMobBtn);
+  wrap.appendChild(mobSection);
+
+  // ── DIVIDER: mobility → circuits ──
+  if (day.circuits.length > 0) {
+    const divider = document.createElement('div');
+    divider.className = 'mobility-circuits-divider';
+    divider.textContent = 'CIRCUITI';
+    wrap.appendChild(divider);
+  }
+
+  // ── CIRCUITS ──
   if (day.circuits.length === 0) {
-    const empty = document.createElement('p');
-    empty.className = 'text-slate-500 italic ml-4 mb-4 font-semibold';
-    empty.textContent = '💤 Giorno di riposo';
-    wrap.appendChild(empty);
+    // show rest only if also no mobility
+    if (day.mobilityExercises.length === 0) {
+      const empty = document.createElement('p');
+      empty.className = 'text-slate-500 italic ml-4 mb-4 font-semibold';
+      empty.textContent = '💤 Giorno di riposo';
+      wrap.appendChild(empty);
+    }
   } else {
     day.circuits.forEach((circuit, ci) => {
       if (ci > 0) {
-        // Spacer tra circuiti
         const spacer = document.createElement('div');
         spacer.className = 'circuit-spacer';
         spacer.textContent = `CIRCUITO ${ci + 1}`;
@@ -254,6 +347,94 @@ function buildDay(day, di) {
   wrap.appendChild(addCircBtn);
 
   return wrap;
+}
+
+// ── BUILD MOBILITY EXERCISE ROW ──
+function buildMobilityExercise(ex, di, ei) {
+  const row = document.createElement('div');
+  row.className = 'mobility-exercise-row';
+
+  const topRow = document.createElement('div');
+  topRow.className = 'flex flex-wrap gap-2 items-center mb-1';
+
+  // Number badge
+  const num = document.createElement('div');
+  num.className = 'w-7 h-7 rounded-full flex items-center justify-center font-black text-sm shrink-0';
+  num.style.cssText = 'background:#10b981;color:#022c22;';
+  num.textContent = ei + 1;
+  topRow.appendChild(num);
+
+  // Library select
+  const libSel = document.createElement('select');
+  libSel.className = 'px-2 py-2 text-xs font-bold rounded border-2 border-emerald-500 bg-emerald-800 text-white focus:outline-none max-w-[200px]';
+  const defOpt = document.createElement('option');
+  defOpt.value = ''; defOpt.textContent = '🧘 Scegli...';
+  libSel.appendChild(defOpt);
+  EXERCISE_LIBRARY.mobility.forEach(name => {
+    const opt = document.createElement('option');
+    opt.value = name; opt.textContent = name;
+    if (ex.name === name) opt.selected = true;
+    libSel.appendChild(opt);
+  });
+  libSel.addEventListener('change', e => { ex.name = e.target.value; nameInput.value = e.target.value; });
+  topRow.appendChild(libSel);
+
+  // Free name input
+  const nameInput = document.createElement('input');
+  nameInput.type = 'text';
+  nameInput.value = ex.name;
+  nameInput.placeholder = 'Nome esercizio...';
+  nameInput.className = 'flex-1 min-w-[140px] px-3 py-2 text-sm rounded border-2 border-slate-600 bg-slate-700 text-white focus:border-emerald-500 focus:outline-none font-semibold';
+  nameInput.addEventListener('input', e => { ex.name = e.target.value; });
+  topRow.appendChild(nameInput);
+
+  // Remove button
+  const removeBtn = document.createElement('button');
+  removeBtn.className = 'ml-auto w-9 h-9 flex items-center justify-center rounded-lg border-2 border-red-700 text-red-400 hover:bg-red-900/40 transition shrink-0';
+  removeBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+  removeBtn.addEventListener('click', () => { state.days[di].mobilityExercises.splice(ei, 1); render(); });
+  topRow.appendChild(removeBtn);
+
+  row.appendChild(topRow);
+
+  // Bottom row: reps + notes
+  const bottomRow = document.createElement('div');
+  bottomRow.className = 'flex flex-wrap gap-2 items-center mt-1 ml-9';
+
+  const repsLabel = document.createElement('span');
+  repsLabel.className = 'text-xs text-slate-400 font-bold';
+  repsLabel.textContent = 'Rip.:';
+  bottomRow.appendChild(repsLabel);
+
+  const repsSel = document.createElement('select');
+  repsSel.className = 'px-2 py-1.5 text-sm rounded border-2 border-slate-600 bg-slate-700 text-white focus:border-emerald-500 focus:outline-none font-semibold';
+  REPS_OPTIONS.forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v; opt.textContent = v || '— —';
+    if (ex.reps === v) opt.selected = true;
+    repsSel.appendChild(opt);
+  });
+  repsSel.addEventListener('change', e => { ex.reps = e.target.value; ex.repsCustom = ''; repsCustom.value = ''; });
+  bottomRow.appendChild(repsSel);
+
+  const repsCustom = document.createElement('input');
+  repsCustom.type = 'text';
+  repsCustom.placeholder = 'o scrivi...';
+  repsCustom.value = ex.repsCustom || '';
+  repsCustom.className = 'w-28 px-2 py-1.5 text-sm rounded border-2 border-emerald-700 bg-slate-700 text-white focus:border-emerald-500 focus:outline-none font-semibold placeholder-slate-500';
+  repsCustom.addEventListener('input', e => { ex.repsCustom = e.target.value; });
+  bottomRow.appendChild(repsCustom);
+
+  const notesInput = document.createElement('input');
+  notesInput.type = 'text';
+  notesInput.value = ex.notes || '';
+  notesInput.placeholder = '📝 Note...';
+  notesInput.className = 'flex-1 min-w-[160px] px-2 py-1.5 text-sm rounded border-2 border-slate-600 bg-slate-700/60 text-white focus:border-emerald-500 focus:outline-none font-semibold placeholder-slate-500';
+  notesInput.addEventListener('input', e => { ex.notes = e.target.value; });
+  bottomRow.appendChild(notesInput);
+
+  row.appendChild(bottomRow);
+  return row;
 }
 
 function buildCircuit(circuit, di, ci) {
@@ -580,7 +761,10 @@ document.getElementById('generatePDFBtn').addEventListener('click', async () => 
     drawHeader(true);
     let y = 44;
 
-    const activeDays = state.days.filter(day => day.circuits.length > 0 && day.circuits.some(c => c.exercises.length > 0));
+    const activeDays = state.days.filter(day =>
+      day.mobilityExercises.length > 0 ||
+      (day.circuits.length > 0 && day.circuits.some(c => c.exercises.length > 0))
+    );
 
     if (activeDays.length === 0) {
       doc.setFont('helvetica', 'italic'); doc.setFontSize(11); doc.setTextColor(160, 160, 160);
@@ -594,7 +778,7 @@ document.getElementById('generatePDFBtn').addEventListener('click', async () => 
       cardio:     { r:59,  g:130, b:246, lr:219, lg:234, lb:254, tr:30,  tg:58,  tb:138 }
     };
     const TYPE_LABELS_PDF = { mobility:'MOBILITY', strength:'STRENGTH', core_power:'CORE/POWER', cardio:'CARDIO' };
-    const TYPE_ICONS_PDF  = { mobility:'🧘', strength:'💪', core_power:'⚡', cardio:'🏃' };
+    const TYPE_ICONS_PDF  = { mobility:'MOB', strength:'STR', core_power:'PWR', cardio:'CRD' };
 
     activeDays.forEach(day => {
       // Day header bar
@@ -604,7 +788,83 @@ document.getElementById('generatePDFBtn').addEventListener('click', async () => 
       doc.text(day.name.toUpperCase(), M + 5, y + 7.5);
       y += 14;
 
+      // ── MOBILITY ROWS (prima dei circuiti, stessa tabella unificata) ──
+      if (day.mobilityExercises && day.mobilityExercises.length > 0) {
+        if (y > H - 40) { y = newPage(); }
+
+        // Sotto-intestazione MOBILITY
+        doc.setFillColor(6, 95, 70); doc.roundedRect(M, y, CW, 8, 1, 1, 'F');
+        doc.setDrawColor(16, 185, 129); doc.setLineWidth(0.3); doc.roundedRect(M, y, CW, 8, 1, 1, 'S');
+        doc.setFillColor(16, 185, 129); doc.rect(M, y, 2.5, 8, 'F');
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(209, 250, 229);
+        doc.text('MOBILITY  -  Riscaldamento & Mobilita Articolare', M + 5, y + 5.3);
+        y += 11;
+
+        // Colonne tabella mobility: #, ESERCIZIO, RIP., NOTE
+        const mobColX = { num: M, name: M + 8, reps: M + 110, notes: M + 138 };
+        doc.setFillColor(209, 250, 229); doc.rect(M, y, CW, 6.5, 'F');
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(6.5); doc.setTextColor(6, 95, 70);
+        doc.text('#',          mobColX.num + 2.5, y + 4.5, { align: 'center' });
+        doc.text('ESERCIZIO',  mobColX.name, y + 4.5);
+        doc.text('RIP.',       mobColX.reps, y + 4.5);
+        doc.text('NOTE',       mobColX.notes, y + 4.5);
+        y += 6.5;
+
+        day.mobilityExercises.forEach((ex, ei) => {
+          const notesLines = ex.notes ? doc.splitTextToSize(ex.notes, 58) : [];
+          const rowH = Math.max(8, notesLines.length * 3.8 + 4);
+          if (y + rowH > H - 18) { y = newPage(); }
+
+          // sfondo verde pallido per righe mobility
+          doc.setFillColor(...(ei % 2 === 0 ? [240, 253, 244] : [220, 252, 231]));
+          doc.rect(M, y, CW, rowH, 'F');
+          doc.setDrawColor(167, 243, 208); doc.setLineWidth(0.15);
+          doc.rect(M, y, CW, rowH, 'S');
+          // striscia laterale verde smeraldo
+          doc.setFillColor(16, 185, 129); doc.rect(M, y, 2.5, rowH, 'F');
+
+          // Numero
+          doc.setFillColor(6, 95, 70); doc.circle(mobColX.num + 2.5, y + rowH/2, 2.8, 'F');
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(7); doc.setTextColor(255, 255, 255);
+          doc.text(String(ei + 1), mobColX.num + 2.5, y + rowH/2 + 2.3, { align: 'center' });
+
+          // Etichetta MOB
+          doc.setFillColor(16, 185, 129); doc.roundedRect(mobColX.name - 0.5, y + (rowH-4.5)/2, 10, 4.5, 1, 1, 'F');
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(5.5); doc.setTextColor(255, 255, 255);
+          doc.text('MOB', mobColX.name + 4.5, y + (rowH-4.5)/2 + 3.3, { align: 'center' });
+
+          // Nome esercizio
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(20, 20, 20);
+          doc.text(doc.splitTextToSize(ex.name || '—', 90), mobColX.name + 12, y + 6);
+
+          // Reps
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(40, 40, 40);
+          doc.text(ex.repsCustom || ex.reps || '—', mobColX.reps, y + 6);
+
+          // Notes
+          if (notesLines.length) {
+            doc.setFont('helvetica', 'italic'); doc.setFontSize(7); doc.setTextColor(100, 100, 100);
+            doc.text(notesLines, mobColX.notes, y + 6);
+          }
+
+          y += rowH;
+        });
+
+        y += 7; // piccolo spazio tra mobility e circuiti
+      }
+
       const activeCircuits = day.circuits.filter(c => c.exercises.length > 0);
+
+      // Sotto-intestazione CIRCUITI (solo se ci sono anche esercizi mobility sopra)
+      if (activeCircuits.length > 0 && day.mobilityExercises && day.mobilityExercises.length > 0) {
+        if (y > H - 40) { y = newPage(); }
+        doc.setFillColor(21, 128, 61); doc.roundedRect(M, y, CW, 8, 1, 1, 'F');
+        doc.setDrawColor(74, 222, 128); doc.setLineWidth(0.3); doc.roundedRect(M, y, CW, 8, 1, 1, 'S');
+        doc.setFillColor(74, 222, 128); doc.rect(M, y, 2.5, 8, 'F');
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(220, 252, 231);
+        doc.text('CIRCUITI  -  Allenamento a Circuito', M + 5, y + 5.3);
+        y += 11;
+      }
 
       activeCircuits.forEach((circuit, ci) => {
         if (y > H - 60) { y = newPage(); }
